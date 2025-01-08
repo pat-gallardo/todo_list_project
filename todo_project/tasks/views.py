@@ -1,11 +1,10 @@
 from django.shortcuts import render
 
-from rest_framework import generics
+from rest_framework import generics, response
 from .models import Task
 from .serializers import TaskSerializer
 from datetime import date
-
-# Create your views here.
+from rest_framework.response import Response
 
 class TaskCreateView(generics.CreateAPIView):
     queryset = Task.objects.all()
@@ -14,18 +13,23 @@ class TaskCreateView(generics.CreateAPIView):
 class TaskListView(generics.ListAPIView):
     serializer_class = TaskSerializer
 
-    def get_queryset(self):
+    def list(self, request, *args, **kwargs):
         today = date.today()
-        tasks = Task.objects.all()
-
+        queryset = Task.objects.all()
+        
+        # First group the tasks by their completion status
+        incoming_tasks = queryset.filter(due_date__date__gt=today)
+        today_tasks = queryset.filter(due_date__date=today)
+        overdue_tasks = queryset.filter(due_date__date__lt=today)
+        
+        # Serialize each group separately
         categorized_tasks = {
-            'Incoming': tasks.filter(due_date__gt=today),
-            'Today': tasks.filter(due_date=today),
-            'Overdue': tasks.filter(due_date__lt=today)
+            'Incoming': TaskSerializer(incoming_tasks, many=True).data,
+            'Today': TaskSerializer(today_tasks, many=True).data,
+            'Overdue': TaskSerializer(overdue_tasks, many=True).data
         }
-
-        return categorized_tasks
-
+        
+        return Response(categorized_tasks)
 class TaskDetailView(generics.RetrieveAPIView):
     queryset = Task.objects.all()
     serializer_class = TaskSerializer

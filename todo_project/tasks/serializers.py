@@ -2,7 +2,7 @@ from rest_framework import serializers
 from .models import Task
 
 class TaskSerializer(serializers.ModelSerializer):
-    completed = serializers.ReadOnlyField()
+    completed = serializers.CharField(read_only=True)
 
     class Meta:
         model = Task
