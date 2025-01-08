@@ -11,9 +11,9 @@ class Task(models.Model):
     @property
     def completed(self):
         today = date.today()
-        if self.due_date > today:
+        if self.due_date.date() > today:
             return "Incoming"
-        elif self.due_date == today:
+        elif self.due_date.date() == today:
             return "Today"
         else:
             return "Overdue"
